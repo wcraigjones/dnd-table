@@ -954,3 +954,14 @@ button {
   .page-shell { padding: 18px; }
   .requirements-grid { grid-template-columns: 1fr; }
 }
+
+.feature-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.feature-button small {
+  color: #667179;
+  font-size: 0.75rem;
+  font-weight: 800;
+}

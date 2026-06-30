@@ -1,16 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-
-export type OptionalFeatureId = "trays" | "drink-holders" | "power" | "dice-rail";
-
-export type SceneOptionId =
-  | "wood-underframe"
-  | "steel-subframe"
-  | "half-modules"
-  | "central-insert"
-  | "segmented-rails"
-  | "trestle-base";
+import type { OptionalFeatureId, SceneOptionId } from "./data/types";
 
 type TableSceneProps = {
   optionId: SceneOptionId;

@@ -14,19 +14,11 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { TableScene, type OptionalFeatureId, type SceneOptionId } from "./TableScene";
-
-type DesignOption = {
-  id: SceneOptionId;
-  rank: number;
-  shortName: string;
-  name: string;
-  tagline: string;
-  summary: string;
-  bestUse: string;
-  strengths: string[];
-  tradeoffs: string[];
-};
+import { optionalFeatures } from "./data/optionalFeatures";
+import { requirementGroups } from "./data/requirements";
+import type { OptionalFeatureId, SceneOptionId } from "./data/types";
+import { designOptions } from "./data/variations";
+import { TableScene } from "./TableScene";
 
 type SequencePhase = {
   id: string;
@@ -51,185 +43,6 @@ const dimensions = {
   sideRail: 10.375,
   monitorWeight: 66,
 };
-
-const designOptions: DesignOption[] = [
-  {
-    id: "wood-underframe",
-    rank: 1,
-    shortName: "Wood cassette",
-    name: "Split top with knock-down wood underframe",
-    tagline: "Recommended baseline",
-    summary:
-      "Two 25 in x 98 in butcher-block halves stay removable. A bolted ladder frame carries the top, aligns the seam, accepts four large legs, and supports an adjustable monitor cassette.",
-    bestUse:
-      "Best balance of furniture appearance, woodworking feasibility, disassembly, and flush monitor control.",
-    strengths: [
-      "Natural match to the two-slab top",
-      "Four large removable legs remain practical",
-      "No mandatory welding or metal fabrication",
-      "Monitor cassette can be serviced and leveled",
-    ],
-    tradeoffs: [
-      "Requires accurate seam registration",
-      "Narrow side rails need continuous support",
-      "Wood movement around the opening must be managed",
-    ],
-  },
-  {
-    id: "steel-subframe",
-    rank: 2,
-    shortName: "Steel spine",
-    name: "Split top with hidden bolted steel subframe",
-    tagline: "Maximum stiffness",
-    summary:
-      "The same two wood halves attach to a hidden bolted steel tube structure. Steel carries the monitor and resists sag without deep wood aprons.",
-    bestUse:
-      "Use when stiffness and repeatable disassembly matter more than keeping the build purely woodworking-oriented.",
-    strengths: [
-      "Highest sag and racking resistance",
-      "Shallower apron can preserve knee clearance",
-      "Precise monitor support is easier to tune",
-      "Repeated teardown is durable",
-    ],
-    tradeoffs: [
-      "Needs welding or careful metalwork",
-      "Fabrication errors are harder to correct",
-      "Top attachment must still allow wood movement",
-    ],
-  },
-  {
-    id: "half-modules",
-    rank: 3,
-    shortName: "Half modules",
-    name: "Two half-tables with removable monitor bridge",
-    tagline: "Most transportable",
-    summary:
-      "Each 25 in side becomes a narrow structural module. The halves register together upstairs, then a removable bridge or cassette spans the monitor bay.",
-    bestUse:
-      "Use if stair turns are severe or the table may move again and each carried piece needs to stay narrow.",
-    strengths: [
-      "Excellent portability",
-      "Each side can be repaired or refinished separately",
-      "Most assembly work can happen on shop-sized modules",
-      "Central bridge locks the monitor area after setup",
-    ],
-    tradeoffs: [
-      "Harder to keep both halves co-planar",
-      "More fasteners and assembly steps",
-      "Four-leg visual requirement needs careful corner blocks",
-    ],
-  },
-  {
-    id: "central-insert",
-    rank: 4,
-    shortName: "Drop-in insert",
-    name: "Removable central monitor insert",
-    tagline: "Best serviceability",
-    summary:
-      "A separate monitor module drops into a larger central bay. The insert controls the visible reveal, leveling hardware, and service access.",
-    bestUse:
-      "Use when future monitor replacement and reducing risk before cutting expensive butcher block are the top priorities.",
-    strengths: [
-      "Monitor module can be bench-tested",
-      "Future screen replacement is easier",
-      "Trim precision can be handled by a replaceable part",
-      "Wood movement is less likely to pinch the screen",
-    ],
-    tradeoffs: [
-      "Adds a visible border around the monitor",
-      "More parts and design work",
-      "Insert still has to land perfectly flush",
-    ],
-  },
-  {
-    id: "segmented-rails",
-    rank: 5,
-    shortName: "Rail frame",
-    name: "Full tabletop rail frame with separate monitor well",
-    tagline: "Strongest wood top layout",
-    summary:
-      "The butcher block is cut into deliberate rails and end panels around a structural monitor well instead of staying as two simple long halves.",
-    bestUse:
-      "Use when structural confidence around the screen matters more than preserving the simple two-slab look.",
-    strengths: [
-      "Avoids fragile half-slab notches",
-      "Long player rails can be continuously supported",
-      "Damaged rails can be remade",
-      "Top pieces can pack smaller than full slabs",
-    ],
-    tradeoffs: [
-      "More seams and exposed end grain",
-      "More cutting of expensive stock",
-      "May look patched unless the joinery is intentional",
-    ],
-  },
-  {
-    id: "trestle-base",
-    rank: 6,
-    shortName: "Trestle base",
-    name: "Pedestal or trestle base with independent cradle",
-    tagline: "Strong alternate",
-    summary:
-      "Two knock-down trestles and a stretcher replace corner legs. The top still splits, and the monitor cradle remains independent.",
-    bestUse:
-      "Use if four corner legs prove too flexible or awkward and stability outweighs the stated leg preference.",
-    strengths: [
-      "Stable if the trestles are placed well",
-      "Long-side knee clearance can improve",
-      "Fewer corner obstructions",
-      "Classic furniture language is possible",
-    ],
-    tradeoffs: [
-      "Conflicts with the preferred four-leg look",
-      "Pedestal placement must avoid DM and player knees",
-      "More visible base design",
-    ],
-  },
-];
-
-const requirementGroups = [
-  {
-    label: "Hard requirements",
-    tone: "hard",
-    items: [
-      "Finished table is approximately 50 x 98 x 29 in and fits the upstairs room.",
-      "55 in touch monitor sits flush in the surface with no added cover glass.",
-      "Top remains split into moveable parts; the two butcher-block halves are not permanently glued together.",
-      "Monitor is carried by an independent adjustable cassette, not by trim or the butcher-block top.",
-      "Assembly breaks down enough for stairs, service, and future monitor removal.",
-      "Wood movement, ventilation, cable relief, and access are designed in from the start.",
-    ],
-  },
-  {
-    label: "Soft requirements",
-    tone: "soft",
-    items: [
-      "Add a modular accessory system for trays and drink holders along the player edges.",
-      "Tray and cup-holder parts may be purchased ready-made rather than fabricated in-house.",
-      "Favor the four-corner-leg furniture look unless stability or transport issues force a trestle solution.",
-      "Keep the monitor bay trim neat enough to look intentional in a living space.",
-      "Make common controls, ports, and cables reachable from the DM side.",
-    ],
-  },
-  {
-    label: "Optional enhancements",
-    tone: "optional",
-    items: [
-      "Clip-on player trays for dice, character sheets, tablets, and snacks.",
-      "Removable drink holders mounted outside the playing surface.",
-      "Flush power/USB module at the DM end.",
-      "Low dice-retention rail around the perimeter.",
-      "Decorative insert trim that can be replaced if a later monitor changes size.",
-    ],
-  },
-];
-
-const optionalFeatures: { id: OptionalFeatureId; label: string; description: string }[] = [
-  { id: "trays", label: "Accessory trays", description: "Clip-on or rail-mounted trays on the long player sides." },
-  { id: "drink-holders", label: "Drink holders", description: "Purchased removable cup holders mounted outside the table edge." },
-  { id: "power", label: "DM power module", description: "A small flush power/USB block near the DM zone." },
-  { id: "dice-rail", label: "Dice rail", description: "A low perimeter lip to keep dice and tokens on the table." },
-];
 
 const criticalRules = [
   "Do not cut the final monitor opening from online dimensions alone.",
@@ -433,6 +246,16 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const featureStateForModel = useMemo(() => {
+    return optionalFeatures.reduce<Record<OptionalFeatureId, boolean>>(
+      (state, feature) => {
+        state[feature.id] = feature.reusableAcross.includes(selected.id) && enabledFeatures[feature.id];
+        return state;
+      },
+      { trays: false, "drink-holders": false, power: false, "dice-rail": false }
+    );
+  }, [enabledFeatures, selected.id]);
+
   const toggleFeature = (id: OptionalFeatureId) => {
     setEnabledFeatures((features) => ({ ...features, [id]: !features[id] }));
   };
@@ -518,12 +341,24 @@ function App() {
             <section className="control-section">
               <div className="section-heading"><Layers3 size={18} /><h2>Optional Features</h2></div>
               <div className="feature-list">
-                {optionalFeatures.map((feature) => (
-                  <button key={feature.id} className={`feature-button ${enabledFeatures[feature.id] ? "active" : ""}`} onClick={() => toggleFeature(feature.id)} aria-pressed={enabledFeatures[feature.id]}>
-                    <strong>{enabledFeatures[feature.id] ? "Enabled" : "Disabled"}: {feature.label}</strong>
-                    <span>{feature.description}</span>
-                  </button>
-                ))}
+                {optionalFeatures.map((feature) => {
+                  const available = feature.reusableAcross.includes(selected.id);
+                  const active = available && enabledFeatures[feature.id];
+
+                  return (
+                    <button
+                      key={feature.id}
+                      className={`feature-button ${active ? "active" : ""}`}
+                      onClick={() => available && toggleFeature(feature.id)}
+                      aria-disabled={!available}
+                      aria-pressed={active}
+                    >
+                      <strong>{available ? (active ? "Enabled" : "Disabled") : "Not compatible"}: {feature.label}</strong>
+                      <span>{feature.description}</span>
+                      <small>Reusable on: {feature.reusableAcross.length} variants</small>
+                    </button>
+                  );
+                })}
               </div>
             </section>
 
@@ -539,7 +374,7 @@ function App() {
           </aside>
 
           <section className="viewer-shell" aria-label="Interactive 3D table model">
-            <TableScene optionId={selected.id} explode={explode} showDimensions={showDimensions} showCables={showCables} showHardware={showHardware} optionalFeatures={enabledFeatures} />
+            <TableScene optionId={selected.id} explode={explode} showDimensions={showDimensions} showCables={showCables} showHardware={showHardware} optionalFeatures={featureStateForModel} />
             <div className="viewer-hud"><div><p className="eyebrow">Current model</p><strong>{selected.shortName}</strong></div><div className="hud-metrics"><span>Top: {dimensions.tableWidth} x {dimensions.tableLength} in</span><span>Opening: {dimensions.monitorOpeningLength} x {dimensions.monitorOpeningWidth} in</span></div></div>
           </section>
         </main>
