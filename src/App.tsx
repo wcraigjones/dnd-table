@@ -14,19 +14,11 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { TableScene, type SceneOptionId } from "./TableScene";
-
-type DesignOption = {
-  id: SceneOptionId;
-  rank: number;
-  shortName: string;
-  name: string;
-  tagline: string;
-  summary: string;
-  bestUse: string;
-  strengths: string[];
-  tradeoffs: string[];
-};
+import { optionalFeatures } from "./data/optionalFeatures";
+import { requirementGroups } from "./data/requirements";
+import type { OptionalFeatureId, SceneOptionId } from "./data/types";
+import { designOptions } from "./data/variations";
+import { TableScene } from "./TableScene";
 
 type SequencePhase = {
   id: string;
@@ -51,141 +43,6 @@ const dimensions = {
   sideRail: 10.375,
   monitorWeight: 66,
 };
-
-const designOptions: DesignOption[] = [
-  {
-    id: "wood-underframe",
-    rank: 1,
-    shortName: "Wood cassette",
-    name: "Split top with knock-down wood underframe",
-    tagline: "Recommended baseline",
-    summary:
-      "Two 25 in x 98 in butcher-block halves stay removable. A bolted ladder frame carries the top, aligns the seam, accepts four large legs, and supports an adjustable monitor cassette.",
-    bestUse:
-      "Best balance of furniture appearance, woodworking feasibility, disassembly, and flush monitor control.",
-    strengths: [
-      "Natural match to the two-slab top",
-      "Four large removable legs remain practical",
-      "No mandatory welding or metal fabrication",
-      "Monitor cassette can be serviced and leveled",
-    ],
-    tradeoffs: [
-      "Requires accurate seam registration",
-      "Narrow side rails need continuous support",
-      "Wood movement around the opening must be managed",
-    ],
-  },
-  {
-    id: "steel-subframe",
-    rank: 2,
-    shortName: "Steel spine",
-    name: "Split top with hidden bolted steel subframe",
-    tagline: "Maximum stiffness",
-    summary:
-      "The same two wood halves attach to a hidden bolted steel tube structure. Steel carries the monitor and resists sag without deep wood aprons.",
-    bestUse:
-      "Use when stiffness and repeatable disassembly matter more than keeping the build purely woodworking-oriented.",
-    strengths: [
-      "Highest sag and racking resistance",
-      "Shallower apron can preserve knee clearance",
-      "Precise monitor support is easier to tune",
-      "Repeated teardown is durable",
-    ],
-    tradeoffs: [
-      "Needs welding or careful metalwork",
-      "Fabrication errors are harder to correct",
-      "Top attachment must still allow wood movement",
-    ],
-  },
-  {
-    id: "half-modules",
-    rank: 3,
-    shortName: "Half modules",
-    name: "Two half-tables with removable monitor bridge",
-    tagline: "Most transportable",
-    summary:
-      "Each 25 in side becomes a narrow structural module. The halves register together upstairs, then a removable bridge or cassette spans the monitor bay.",
-    bestUse:
-      "Use if stair turns are severe or the table may move again and each carried piece needs to stay narrow.",
-    strengths: [
-      "Excellent portability",
-      "Each side can be repaired or refinished separately",
-      "Most assembly work can happen on shop-sized modules",
-      "Central bridge locks the monitor area after setup",
-    ],
-    tradeoffs: [
-      "Harder to keep both halves co-planar",
-      "More fasteners and assembly steps",
-      "Four-leg visual requirement needs careful corner blocks",
-    ],
-  },
-  {
-    id: "central-insert",
-    rank: 4,
-    shortName: "Drop-in insert",
-    name: "Removable central monitor insert",
-    tagline: "Best serviceability",
-    summary:
-      "A separate monitor module drops into a larger central bay. The insert controls the visible reveal, leveling hardware, and service access.",
-    bestUse:
-      "Use when future monitor replacement and reducing risk before cutting expensive butcher block are the top priorities.",
-    strengths: [
-      "Monitor module can be bench-tested",
-      "Future screen replacement is easier",
-      "Trim precision can be handled by a replaceable part",
-      "Wood movement is less likely to pinch the screen",
-    ],
-    tradeoffs: [
-      "Adds a visible border around the monitor",
-      "More parts and design work",
-      "Insert still has to land perfectly flush",
-    ],
-  },
-  {
-    id: "segmented-rails",
-    rank: 5,
-    shortName: "Rail frame",
-    name: "Full tabletop rail frame with separate monitor well",
-    tagline: "Strongest wood top layout",
-    summary:
-      "The butcher block is cut into deliberate rails and end panels around a structural monitor well instead of staying as two simple long halves.",
-    bestUse:
-      "Use when structural confidence around the screen matters more than preserving the simple two-slab look.",
-    strengths: [
-      "Avoids fragile half-slab notches",
-      "Long player rails can be continuously supported",
-      "Damaged rails can be remade",
-      "Top pieces can pack smaller than full slabs",
-    ],
-    tradeoffs: [
-      "More seams and exposed end grain",
-      "More cutting of expensive stock",
-      "May look patched unless the joinery is intentional",
-    ],
-  },
-  {
-    id: "trestle-base",
-    rank: 6,
-    shortName: "Trestle base",
-    name: "Pedestal or trestle base with independent cradle",
-    tagline: "Strong alternate",
-    summary:
-      "Two knock-down trestles and a stretcher replace corner legs. The top still splits, and the monitor cradle remains independent.",
-    bestUse:
-      "Use if four corner legs prove too flexible or awkward and stability outweighs the stated leg preference.",
-    strengths: [
-      "Stable if the trestles are placed well",
-      "Long-side knee clearance can improve",
-      "Fewer corner obstructions",
-      "Classic furniture language is possible",
-    ],
-    tradeoffs: [
-      "Conflicts with the preferred four-leg look",
-      "Pedestal placement must avoid DM and player knees",
-      "More visible base design",
-    ],
-  },
-];
 
 const criticalRules = [
   "Do not cut the final monitor opening from online dimensions alone.",
@@ -365,19 +222,43 @@ const metricCards = [
 ];
 
 function App() {
+  const [page, setPage] = useState<"requirements" | "variants" | "configuration">("requirements");
   const [selectedId, setSelectedId] = useState<SceneOptionId>("wood-underframe");
   const [explode, setExplode] = useState(0.15);
   const [showDimensions, setShowDimensions] = useState(true);
   const [showCables, setShowCables] = useState(true);
   const [showHardware, setShowHardware] = useState(true);
-  const [activePhase, setActivePhase] = useState(buildSequence[0].id);
+  const [enabledFeatures, setEnabledFeatures] = useState<Record<OptionalFeatureId, boolean>>({
+    trays: true,
+    "drink-holders": true,
+    power: false,
+    "dice-rail": false,
+  });
 
   const selected = useMemo(
     () => designOptions.find((option) => option.id === selectedId) ?? designOptions[0],
     [selectedId]
   );
 
-  const phase = buildSequence.find((item) => item.id === activePhase) ?? buildSequence[0];
+  const openConfiguration = (id: SceneOptionId) => {
+    setSelectedId(id);
+    setPage("configuration");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const featureStateForModel = useMemo(() => {
+    return optionalFeatures.reduce<Record<OptionalFeatureId, boolean>>(
+      (state, feature) => {
+        state[feature.id] = feature.reusableAcross.includes(selected.id) && enabledFeatures[feature.id];
+        return state;
+      },
+      { trays: false, "drink-holders": false, power: false, "dice-rail": false }
+    );
+  }, [enabledFeatures, selected.id]);
+
+  const toggleFeature = (id: OptionalFeatureId) => {
+    setEnabledFeatures((features) => ({ ...features, [id]: !features[id] }));
+  };
 
   return (
     <div className="app-shell">
@@ -386,268 +267,118 @@ function App() {
           <p className="eyebrow">Knock-down gaming table</p>
           <h1>D&D Table Design Explorer</h1>
         </div>
-        <div className="topbar-badges" aria-label="Project summary">
-          <span>Flush 55 in touch monitor</span>
-          <span>Two slab top</span>
-          <span>Upstairs assembly</span>
-        </div>
+        <nav className="page-tabs" aria-label="Explorer pages">
+          <button className={page === "requirements" ? "active" : ""} onClick={() => setPage("requirements")}>1. Requirements</button>
+          <button className={page === "variants" ? "active" : ""} onClick={() => setPage("variants")}>2. Variants</button>
+          <button className={page === "configuration" ? "active" : ""} onClick={() => setPage("configuration")}>Configuration</button>
+        </nav>
       </header>
 
-      <main className="workspace">
-        <aside className="control-panel" aria-label="Design controls">
-          <section className="control-section">
-            <div className="section-heading">
-              <Layers3 size={18} />
-              <h2>Design Variation</h2>
-            </div>
-            <div className="option-list" role="tablist" aria-label="Table design options">
-              {designOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={`option-button ${option.id === selectedId ? "active" : ""}`}
-                  onClick={() => setSelectedId(option.id)}
-                  role="tab"
-                  aria-selected={option.id === selectedId}
-                >
-                  <span className="rank">{option.rank}</span>
-                  <span>
-                    <strong>{option.shortName}</strong>
-                    <small>{option.tagline}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
+      {page === "requirements" && (
+        <main className="page-shell">
+          <section className="hero-panel">
+            <p className="eyebrow">Page 1</p>
+            <h2>Requirements by priority</h2>
+            <p>Start here to separate constraints that cannot move from preferences and upgrades that can be toggled per configuration.</p>
           </section>
-
-          <section className="control-section">
-            <div className="section-heading">
-              <SlidersHorizontal size={18} />
-              <h2>Model Layers</h2>
-            </div>
-            <div className="toggle-row">
-              <ToggleButton
-                active={showDimensions}
-                label="Dimensions"
-                icon={Ruler}
-                onClick={() => setShowDimensions((value) => !value)}
-              />
-              <ToggleButton
-                active={showHardware}
-                label="Hardware"
-                icon={Wrench}
-                onClick={() => setShowHardware((value) => !value)}
-              />
-              <ToggleButton
-                active={showCables}
-                label="Cables"
-                icon={Cable}
-                onClick={() => setShowCables((value) => !value)}
-              />
-            </div>
-            <label className="range-control">
-              <span>Exploded view</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={explode}
-                onChange={(event) => setExplode(Number(event.target.value))}
-              />
-            </label>
-          </section>
-
-          <section className="selected-brief">
-            <p className="eyebrow">Selected option</p>
-            <h2>{selected.name}</h2>
-            <p>{selected.summary}</p>
-            <dl>
-              <div>
-                <dt>Best use</dt>
-                <dd>{selected.bestUse}</dd>
-              </div>
-            </dl>
-          </section>
-        </aside>
-
-        <section className="viewer-shell" aria-label="Interactive 3D table model">
-          <TableScene
-            optionId={selected.id}
-            explode={explode}
-            showDimensions={showDimensions}
-            showCables={showCables}
-            showHardware={showHardware}
-          />
-          <div className="viewer-hud">
-            <div>
-              <p className="eyebrow">Current model</p>
-              <strong>{selected.shortName}</strong>
-            </div>
-            <div className="hud-metrics">
-              <span>Top: {dimensions.tableWidth} x {dimensions.tableLength} in</span>
-              <span>Surface: {dimensions.tableHeight} in high</span>
-              <span>Opening: {dimensions.monitorOpeningLength} x {dimensions.monitorOpeningWidth} in</span>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <section className="content-band">
-        <div className="metric-grid">
-          {metricCards.map((card) => (
-            <article className="metric-card" key={card.label}>
-              <span>{card.label}</span>
-              <strong>{card.value}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="content-grid">
-        <article className="panel plan-panel">
-          <div className="section-heading">
-            <Monitor size={18} />
-            <h2>Plan Coordinates</h2>
-          </div>
-          <PlanView />
-        </article>
-
-        <article className="panel">
-          <div className="section-heading">
-            <ShieldCheck size={18} />
-            <h2>Non-negotiables</h2>
-          </div>
-          <ul className="rule-list">
-            {criticalRules.map((rule) => (
-              <li key={rule}>
-                <AlertTriangle size={16} />
-                <span>{rule}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </section>
-
-      <section className="content-grid wide-left">
-        <article className="panel">
-          <div className="section-heading">
-            <PackageOpen size={18} />
-            <h2>Build Sequence</h2>
-          </div>
-          <div className="phase-tabs" role="tablist" aria-label="Build phases">
-            {buildSequence.map((item) => (
-              <button
-                key={item.id}
-                className={item.id === activePhase ? "active" : ""}
-                onClick={() => setActivePhase(item.id)}
-                role="tab"
-                aria-selected={item.id === activePhase}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <ol className="step-list">
-            {phase.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </article>
-
-        <article className="panel">
-          <div className="section-heading">
-            <ClipboardList size={18} />
-            <h2>Measure Before CAD</h2>
-          </div>
-          <div className="compact-groups">
-            {measurementGroups.map((group) => (
-              <section key={group.label}>
+          <section className="requirements-grid">
+            {requirementGroups.map((group) => (
+              <article className={`requirement-card ${group.tone}`} key={group.label}>
                 <h3>{group.label}</h3>
                 <ul>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
+                  {group.items.map((item) => <li key={item}>{item}</li>)}
                 </ul>
-              </section>
+              </article>
             ))}
-          </div>
-        </article>
-      </section>
+          </section>
+          <footer className="page-actions">
+            <button className="primary-action" onClick={() => setPage("variants")}>Continue to variant table</button>
+          </footer>
+        </main>
+      )}
 
-      <section className="variation-section">
-        <div className="section-heading">
-          <Layers3 size={18} />
-          <h2>Variation Matrix</h2>
-        </div>
-        <div className="variation-grid">
-          {designOptions.map((option) => (
-            <article
-              className={`variation-card ${option.id === selectedId ? "active" : ""}`}
-              key={option.id}
-              onClick={() => setSelectedId(option.id)}
-            >
-              <div className="variation-title">
-                <span>{option.rank}</span>
-                <h3>{option.name}</h3>
+      {page === "variants" && (
+        <main className="page-shell">
+          <section className="hero-panel">
+            <p className="eyebrow">Page 2</p>
+            <h2>Variant table</h2>
+            <p>Click any row to drill into a dedicated configuration page with the live model and feature toggles.</p>
+          </section>
+          <section className="panel">
+            <div className="variant-table-wrap">
+              <table className="variant-table">
+                <thead>
+                  <tr><th>Rank</th><th>Variant</th><th>Best use</th><th>Strengths</th><th>Tradeoffs</th></tr>
+                </thead>
+                <tbody>
+                  {designOptions.map((option) => (
+                    <tr key={option.id} onClick={() => openConfiguration(option.id)} tabIndex={0} onKeyDown={(event) => event.key === "Enter" && openConfiguration(option.id)}>
+                      <td><span className="rank">{option.rank}</span></td>
+                      <td><strong>{option.name}</strong><small>{option.tagline}</small></td>
+                      <td>{option.bestUse}</td>
+                      <td>{option.strengths.slice(0, 2).join("; ")}</td>
+                      <td>{option.tradeoffs.slice(0, 2).join("; ")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      )}
+
+      {page === "configuration" && (
+        <main className="workspace">
+          <aside className="control-panel" aria-label="Configuration controls">
+            <button className="text-action" onClick={() => setPage("variants")}>← Back to variant table</button>
+            <section className="selected-brief">
+              <p className="eyebrow">Dedicated configuration</p>
+              <h2>{selected.name}</h2>
+              <p>{selected.summary}</p>
+              <dl><div><dt>Best use</dt><dd>{selected.bestUse}</dd></div></dl>
+            </section>
+
+            <section className="control-section">
+              <div className="section-heading"><Layers3 size={18} /><h2>Optional Features</h2></div>
+              <div className="feature-list">
+                {optionalFeatures.map((feature) => {
+                  const available = feature.reusableAcross.includes(selected.id);
+                  const active = available && enabledFeatures[feature.id];
+
+                  return (
+                    <button
+                      key={feature.id}
+                      className={`feature-button ${active ? "active" : ""}`}
+                      onClick={() => available && toggleFeature(feature.id)}
+                      aria-disabled={!available}
+                      aria-pressed={active}
+                    >
+                      <strong>{available ? (active ? "Enabled" : "Disabled") : "Not compatible"}: {feature.label}</strong>
+                      <span>{feature.description}</span>
+                      <small>Reusable on: {feature.reusableAcross.length} variants</small>
+                    </button>
+                  );
+                })}
               </div>
-              <p>{option.summary}</p>
-              <h4>Advantages</h4>
-              <ul>
-                {option.strengths.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <h4>Tradeoffs</h4>
-              <ul>
-                {option.tradeoffs.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
+            </section>
 
-      <section className="content-grid">
-        <article className="panel">
-          <div className="section-heading">
-            <Hammer size={18} />
-            <h2>Hardware Palette</h2>
-          </div>
-          <div className="compact-groups hardware-groups">
-            {hardwareGroups.map((group) => (
-              <section key={group.label}>
-                <h3>{group.label}</h3>
-                <ul>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        </article>
+            <section className="control-section">
+              <div className="section-heading"><SlidersHorizontal size={18} /><h2>Model Layers</h2></div>
+              <div className="toggle-row">
+                <ToggleButton active={showDimensions} label="Dimensions" icon={Ruler} onClick={() => setShowDimensions((value) => !value)} />
+                <ToggleButton active={showHardware} label="Hardware" icon={Wrench} onClick={() => setShowHardware((value) => !value)} />
+                <ToggleButton active={showCables} label="Cables" icon={Cable} onClick={() => setShowCables((value) => !value)} />
+              </div>
+              <label className="range-control"><span>Exploded view</span><input type="range" min="0" max="1" step="0.01" value={explode} onChange={(event) => setExplode(Number(event.target.value))} /></label>
+            </section>
+          </aside>
 
-        <article className="panel">
-          <div className="section-heading">
-            <AlertTriangle size={18} />
-            <h2>Risk Register</h2>
-          </div>
-          <ol className="risk-list">
-            {riskItems.map((risk) => (
-              <li key={risk}>{risk}</li>
-            ))}
-          </ol>
-        </article>
-      </section>
-
-      <footer className="footer-note">
-        <CheckCircle2 size={16} />
-        <span>
-          Default target: split acacia top, four removable legs, movement-friendly top fasteners,
-          independent adjustable cassette, exposed flush touch glass, and DM-side cable access.
-        </span>
-      </footer>
+          <section className="viewer-shell" aria-label="Interactive 3D table model">
+            <TableScene optionId={selected.id} explode={explode} showDimensions={showDimensions} showCables={showCables} showHardware={showHardware} optionalFeatures={featureStateForModel} />
+            <div className="viewer-hud"><div><p className="eyebrow">Current model</p><strong>{selected.shortName}</strong></div><div className="hud-metrics"><span>Top: {dimensions.tableWidth} x {dimensions.tableLength} in</span><span>Opening: {dimensions.monitorOpeningLength} x {dimensions.monitorOpeningWidth} in</span></div></div>
+          </section>
+        </main>
+      )}
     </div>
   );
 }

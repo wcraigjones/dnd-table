@@ -1,14 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-
-export type SceneOptionId =
-  | "wood-underframe"
-  | "steel-subframe"
-  | "half-modules"
-  | "central-insert"
-  | "segmented-rails"
-  | "trestle-base";
+import type { OptionalFeatureId, SceneOptionId } from "./data/types";
 
 type TableSceneProps = {
   optionId: SceneOptionId;
@@ -16,6 +9,7 @@ type TableSceneProps = {
   showDimensions: boolean;
   showCables: boolean;
   showHardware: boolean;
+  optionalFeatures?: Record<OptionalFeatureId, boolean>;
 };
 
 const MODEL = {
@@ -46,6 +40,7 @@ export function TableScene({
   showDimensions,
   showCables,
   showHardware,
+  optionalFeatures = { trays: false, "drink-holders": false, power: false, "dice-rail": false },
 }: TableSceneProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -124,7 +119,7 @@ export function TableScene({
     const modelGroup = new THREE.Group();
     scene.add(modelGroup);
 
-    buildTableModel(modelGroup, materials, optionId, explode, showCables, showHardware, showDimensions);
+    buildTableModel(modelGroup, materials, optionId, explode, showCables, showHardware, showDimensions, optionalFeatures);
 
     const clock = new THREE.Clock();
     let frame = 0;
@@ -146,7 +141,7 @@ export function TableScene({
       disposeObject(scene);
       container.replaceChildren();
     };
-  }, [optionId, explode, showDimensions, showCables, showHardware]);
+  }, [optionId, explode, showDimensions, showCables, showHardware, optionalFeatures]);
 
   return <div className="table-scene" ref={containerRef} />;
 }
@@ -238,7 +233,8 @@ function buildTableModel(
   explode: number,
   showCables: boolean,
   showHardware: boolean,
-  showDimensions: boolean
+  showDimensions: boolean,
+  optionalFeatures: Record<OptionalFeatureId, boolean>
 ) {
   const isSteel = optionId === "steel-subframe";
   const isHalf = optionId === "half-modules";
@@ -275,6 +271,8 @@ function buildTableModel(
   if (showCables) {
     addCableRun(root, materials, explode);
   }
+
+  addOptionalFeatures(root, materials, optionalFeatures, explode);
 
   if (showDimensions) {
     addDimensionGuides(root, materials);
@@ -690,6 +688,71 @@ function addCableRun(root: THREE.Group, materials: SceneMaterials, explode: numb
     receiveShadow: true,
     edges: true,
   });
+}
+
+function addOptionalFeatures(
+  root: THREE.Group,
+  materials: SceneMaterials,
+  optionalFeatures: Record<OptionalFeatureId, boolean>,
+  explode: number
+) {
+  const y = TOP_SURFACE_Y + 0.35 + explode * 1.2;
+
+  if (optionalFeatures.trays) {
+    for (const z of [Z_MIN - 5.2, Z_MAX + 5.2]) {
+      addBox(root, {
+        center: [-7, y, z],
+        size: [34, 0.8, 7.2],
+        material: materials.woodAlt,
+        castShadow: true,
+        receiveShadow: true,
+        edges: true,
+      });
+      addBox(root, {
+        center: [-7, y + 0.45, z],
+        size: [31, 0.18, 4.6],
+        material: materials.gasket,
+        edges: true,
+      });
+    }
+  }
+
+  if (optionalFeatures["drink-holders"]) {
+    for (const x of [-35, -18, 18, 35]) {
+      for (const z of [Z_MIN - 4.8, Z_MAX + 4.8]) {
+        const holder = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.9, 1, 36), materials.steelDark);
+        holder.position.set(x, y + 0.25, z);
+        holder.castShadow = true;
+        root.add(holder);
+        const recess = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 1.08, 36), materials.black);
+        recess.position.set(x, y + 0.32, z);
+        root.add(recess);
+      }
+    }
+  }
+
+  if (optionalFeatures.power) {
+    addBox(root, {
+      center: [35, TOP_SURFACE_Y + 0.42 + explode, Z_MAX - 6.2],
+      size: [10, 0.7, 3.6],
+      material: materials.steelDark,
+      castShadow: true,
+      receiveShadow: true,
+      edges: true,
+    });
+    addBox(root, {
+      center: [35, TOP_SURFACE_Y + 0.84 + explode, Z_MAX - 6.2],
+      size: [6.2, 0.16, 1.6],
+      material: materials.black,
+    });
+  }
+
+  if (optionalFeatures["dice-rail"]) {
+    addBox(root, { center: [0, TOP_SURFACE_Y + 0.55 + explode, Z_MIN + 1.1], size: [89, 1.1, 1.1], material: materials.highlight, edges: true });
+    addBox(root, { center: [0, TOP_SURFACE_Y + 0.55 + explode, Z_MAX - 1.1], size: [89, 1.1, 1.1], material: materials.highlight, edges: true });
+    addBox(root, { center: [X_MIN + 1.1, TOP_SURFACE_Y + 0.55 + explode, 0], size: [1.1, 1.1, 43], material: materials.highlight, edges: true });
+    addBox(root, { center: [X_MAX - 1.1, TOP_SURFACE_Y + 0.55 + explode, 0], size: [1.1, 1.1, 43], material: materials.highlight, edges: true });
+  }
 }
 
 function addDimensionGuides(root: THREE.Group, materials: SceneMaterials) {
