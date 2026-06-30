@@ -14,7 +14,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { TableScene, type SceneOptionId } from "./TableScene";
+import { TableScene, type OptionalFeatureId, type SceneOptionId } from "./TableScene";
 
 type DesignOption = {
   id: SceneOptionId;
@@ -185,6 +185,50 @@ const designOptions: DesignOption[] = [
       "More visible base design",
     ],
   },
+];
+
+const requirementGroups = [
+  {
+    label: "Hard requirements",
+    tone: "hard",
+    items: [
+      "Finished table is approximately 50 x 98 x 29 in and fits the upstairs room.",
+      "55 in touch monitor sits flush in the surface with no added cover glass.",
+      "Top remains split into moveable parts; the two butcher-block halves are not permanently glued together.",
+      "Monitor is carried by an independent adjustable cassette, not by trim or the butcher-block top.",
+      "Assembly breaks down enough for stairs, service, and future monitor removal.",
+      "Wood movement, ventilation, cable relief, and access are designed in from the start.",
+    ],
+  },
+  {
+    label: "Soft requirements",
+    tone: "soft",
+    items: [
+      "Add a modular accessory system for trays and drink holders along the player edges.",
+      "Tray and cup-holder parts may be purchased ready-made rather than fabricated in-house.",
+      "Favor the four-corner-leg furniture look unless stability or transport issues force a trestle solution.",
+      "Keep the monitor bay trim neat enough to look intentional in a living space.",
+      "Make common controls, ports, and cables reachable from the DM side.",
+    ],
+  },
+  {
+    label: "Optional enhancements",
+    tone: "optional",
+    items: [
+      "Clip-on player trays for dice, character sheets, tablets, and snacks.",
+      "Removable drink holders mounted outside the playing surface.",
+      "Flush power/USB module at the DM end.",
+      "Low dice-retention rail around the perimeter.",
+      "Decorative insert trim that can be replaced if a later monitor changes size.",
+    ],
+  },
+];
+
+const optionalFeatures: { id: OptionalFeatureId; label: string; description: string }[] = [
+  { id: "trays", label: "Accessory trays", description: "Clip-on or rail-mounted trays on the long player sides." },
+  { id: "drink-holders", label: "Drink holders", description: "Purchased removable cup holders mounted outside the table edge." },
+  { id: "power", label: "DM power module", description: "A small flush power/USB block near the DM zone." },
+  { id: "dice-rail", label: "Dice rail", description: "A low perimeter lip to keep dice and tokens on the table." },
 ];
 
 const criticalRules = [
@@ -365,19 +409,33 @@ const metricCards = [
 ];
 
 function App() {
+  const [page, setPage] = useState<"requirements" | "variants" | "configuration">("requirements");
   const [selectedId, setSelectedId] = useState<SceneOptionId>("wood-underframe");
   const [explode, setExplode] = useState(0.15);
   const [showDimensions, setShowDimensions] = useState(true);
   const [showCables, setShowCables] = useState(true);
   const [showHardware, setShowHardware] = useState(true);
-  const [activePhase, setActivePhase] = useState(buildSequence[0].id);
+  const [enabledFeatures, setEnabledFeatures] = useState<Record<OptionalFeatureId, boolean>>({
+    trays: true,
+    "drink-holders": true,
+    power: false,
+    "dice-rail": false,
+  });
 
   const selected = useMemo(
     () => designOptions.find((option) => option.id === selectedId) ?? designOptions[0],
     [selectedId]
   );
 
-  const phase = buildSequence.find((item) => item.id === activePhase) ?? buildSequence[0];
+  const openConfiguration = (id: SceneOptionId) => {
+    setSelectedId(id);
+    setPage("configuration");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const toggleFeature = (id: OptionalFeatureId) => {
+    setEnabledFeatures((features) => ({ ...features, [id]: !features[id] }));
+  };
 
   return (
     <div className="app-shell">
@@ -386,268 +444,106 @@ function App() {
           <p className="eyebrow">Knock-down gaming table</p>
           <h1>D&D Table Design Explorer</h1>
         </div>
-        <div className="topbar-badges" aria-label="Project summary">
-          <span>Flush 55 in touch monitor</span>
-          <span>Two slab top</span>
-          <span>Upstairs assembly</span>
-        </div>
+        <nav className="page-tabs" aria-label="Explorer pages">
+          <button className={page === "requirements" ? "active" : ""} onClick={() => setPage("requirements")}>1. Requirements</button>
+          <button className={page === "variants" ? "active" : ""} onClick={() => setPage("variants")}>2. Variants</button>
+          <button className={page === "configuration" ? "active" : ""} onClick={() => setPage("configuration")}>Configuration</button>
+        </nav>
       </header>
 
-      <main className="workspace">
-        <aside className="control-panel" aria-label="Design controls">
-          <section className="control-section">
-            <div className="section-heading">
-              <Layers3 size={18} />
-              <h2>Design Variation</h2>
-            </div>
-            <div className="option-list" role="tablist" aria-label="Table design options">
-              {designOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={`option-button ${option.id === selectedId ? "active" : ""}`}
-                  onClick={() => setSelectedId(option.id)}
-                  role="tab"
-                  aria-selected={option.id === selectedId}
-                >
-                  <span className="rank">{option.rank}</span>
-                  <span>
-                    <strong>{option.shortName}</strong>
-                    <small>{option.tagline}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
+      {page === "requirements" && (
+        <main className="page-shell">
+          <section className="hero-panel">
+            <p className="eyebrow">Page 1</p>
+            <h2>Requirements by priority</h2>
+            <p>Start here to separate constraints that cannot move from preferences and upgrades that can be toggled per configuration.</p>
           </section>
-
-          <section className="control-section">
-            <div className="section-heading">
-              <SlidersHorizontal size={18} />
-              <h2>Model Layers</h2>
-            </div>
-            <div className="toggle-row">
-              <ToggleButton
-                active={showDimensions}
-                label="Dimensions"
-                icon={Ruler}
-                onClick={() => setShowDimensions((value) => !value)}
-              />
-              <ToggleButton
-                active={showHardware}
-                label="Hardware"
-                icon={Wrench}
-                onClick={() => setShowHardware((value) => !value)}
-              />
-              <ToggleButton
-                active={showCables}
-                label="Cables"
-                icon={Cable}
-                onClick={() => setShowCables((value) => !value)}
-              />
-            </div>
-            <label className="range-control">
-              <span>Exploded view</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={explode}
-                onChange={(event) => setExplode(Number(event.target.value))}
-              />
-            </label>
-          </section>
-
-          <section className="selected-brief">
-            <p className="eyebrow">Selected option</p>
-            <h2>{selected.name}</h2>
-            <p>{selected.summary}</p>
-            <dl>
-              <div>
-                <dt>Best use</dt>
-                <dd>{selected.bestUse}</dd>
-              </div>
-            </dl>
-          </section>
-        </aside>
-
-        <section className="viewer-shell" aria-label="Interactive 3D table model">
-          <TableScene
-            optionId={selected.id}
-            explode={explode}
-            showDimensions={showDimensions}
-            showCables={showCables}
-            showHardware={showHardware}
-          />
-          <div className="viewer-hud">
-            <div>
-              <p className="eyebrow">Current model</p>
-              <strong>{selected.shortName}</strong>
-            </div>
-            <div className="hud-metrics">
-              <span>Top: {dimensions.tableWidth} x {dimensions.tableLength} in</span>
-              <span>Surface: {dimensions.tableHeight} in high</span>
-              <span>Opening: {dimensions.monitorOpeningLength} x {dimensions.monitorOpeningWidth} in</span>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <section className="content-band">
-        <div className="metric-grid">
-          {metricCards.map((card) => (
-            <article className="metric-card" key={card.label}>
-              <span>{card.label}</span>
-              <strong>{card.value}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="content-grid">
-        <article className="panel plan-panel">
-          <div className="section-heading">
-            <Monitor size={18} />
-            <h2>Plan Coordinates</h2>
-          </div>
-          <PlanView />
-        </article>
-
-        <article className="panel">
-          <div className="section-heading">
-            <ShieldCheck size={18} />
-            <h2>Non-negotiables</h2>
-          </div>
-          <ul className="rule-list">
-            {criticalRules.map((rule) => (
-              <li key={rule}>
-                <AlertTriangle size={16} />
-                <span>{rule}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </section>
-
-      <section className="content-grid wide-left">
-        <article className="panel">
-          <div className="section-heading">
-            <PackageOpen size={18} />
-            <h2>Build Sequence</h2>
-          </div>
-          <div className="phase-tabs" role="tablist" aria-label="Build phases">
-            {buildSequence.map((item) => (
-              <button
-                key={item.id}
-                className={item.id === activePhase ? "active" : ""}
-                onClick={() => setActivePhase(item.id)}
-                role="tab"
-                aria-selected={item.id === activePhase}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <ol className="step-list">
-            {phase.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </article>
-
-        <article className="panel">
-          <div className="section-heading">
-            <ClipboardList size={18} />
-            <h2>Measure Before CAD</h2>
-          </div>
-          <div className="compact-groups">
-            {measurementGroups.map((group) => (
-              <section key={group.label}>
+          <section className="requirements-grid">
+            {requirementGroups.map((group) => (
+              <article className={`requirement-card ${group.tone}`} key={group.label}>
                 <h3>{group.label}</h3>
                 <ul>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
+                  {group.items.map((item) => <li key={item}>{item}</li>)}
                 </ul>
-              </section>
+              </article>
             ))}
-          </div>
-        </article>
-      </section>
+          </section>
+          <footer className="page-actions">
+            <button className="primary-action" onClick={() => setPage("variants")}>Continue to variant table</button>
+          </footer>
+        </main>
+      )}
 
-      <section className="variation-section">
-        <div className="section-heading">
-          <Layers3 size={18} />
-          <h2>Variation Matrix</h2>
-        </div>
-        <div className="variation-grid">
-          {designOptions.map((option) => (
-            <article
-              className={`variation-card ${option.id === selectedId ? "active" : ""}`}
-              key={option.id}
-              onClick={() => setSelectedId(option.id)}
-            >
-              <div className="variation-title">
-                <span>{option.rank}</span>
-                <h3>{option.name}</h3>
+      {page === "variants" && (
+        <main className="page-shell">
+          <section className="hero-panel">
+            <p className="eyebrow">Page 2</p>
+            <h2>Variant table</h2>
+            <p>Click any row to drill into a dedicated configuration page with the live model and feature toggles.</p>
+          </section>
+          <section className="panel">
+            <div className="variant-table-wrap">
+              <table className="variant-table">
+                <thead>
+                  <tr><th>Rank</th><th>Variant</th><th>Best use</th><th>Strengths</th><th>Tradeoffs</th></tr>
+                </thead>
+                <tbody>
+                  {designOptions.map((option) => (
+                    <tr key={option.id} onClick={() => openConfiguration(option.id)} tabIndex={0} onKeyDown={(event) => event.key === "Enter" && openConfiguration(option.id)}>
+                      <td><span className="rank">{option.rank}</span></td>
+                      <td><strong>{option.name}</strong><small>{option.tagline}</small></td>
+                      <td>{option.bestUse}</td>
+                      <td>{option.strengths.slice(0, 2).join("; ")}</td>
+                      <td>{option.tradeoffs.slice(0, 2).join("; ")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      )}
+
+      {page === "configuration" && (
+        <main className="workspace">
+          <aside className="control-panel" aria-label="Configuration controls">
+            <button className="text-action" onClick={() => setPage("variants")}>← Back to variant table</button>
+            <section className="selected-brief">
+              <p className="eyebrow">Dedicated configuration</p>
+              <h2>{selected.name}</h2>
+              <p>{selected.summary}</p>
+              <dl><div><dt>Best use</dt><dd>{selected.bestUse}</dd></div></dl>
+            </section>
+
+            <section className="control-section">
+              <div className="section-heading"><Layers3 size={18} /><h2>Optional Features</h2></div>
+              <div className="feature-list">
+                {optionalFeatures.map((feature) => (
+                  <button key={feature.id} className={`feature-button ${enabledFeatures[feature.id] ? "active" : ""}`} onClick={() => toggleFeature(feature.id)} aria-pressed={enabledFeatures[feature.id]}>
+                    <strong>{enabledFeatures[feature.id] ? "Enabled" : "Disabled"}: {feature.label}</strong>
+                    <span>{feature.description}</span>
+                  </button>
+                ))}
               </div>
-              <p>{option.summary}</p>
-              <h4>Advantages</h4>
-              <ul>
-                {option.strengths.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <h4>Tradeoffs</h4>
-              <ul>
-                {option.tradeoffs.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
+            </section>
 
-      <section className="content-grid">
-        <article className="panel">
-          <div className="section-heading">
-            <Hammer size={18} />
-            <h2>Hardware Palette</h2>
-          </div>
-          <div className="compact-groups hardware-groups">
-            {hardwareGroups.map((group) => (
-              <section key={group.label}>
-                <h3>{group.label}</h3>
-                <ul>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        </article>
+            <section className="control-section">
+              <div className="section-heading"><SlidersHorizontal size={18} /><h2>Model Layers</h2></div>
+              <div className="toggle-row">
+                <ToggleButton active={showDimensions} label="Dimensions" icon={Ruler} onClick={() => setShowDimensions((value) => !value)} />
+                <ToggleButton active={showHardware} label="Hardware" icon={Wrench} onClick={() => setShowHardware((value) => !value)} />
+                <ToggleButton active={showCables} label="Cables" icon={Cable} onClick={() => setShowCables((value) => !value)} />
+              </div>
+              <label className="range-control"><span>Exploded view</span><input type="range" min="0" max="1" step="0.01" value={explode} onChange={(event) => setExplode(Number(event.target.value))} /></label>
+            </section>
+          </aside>
 
-        <article className="panel">
-          <div className="section-heading">
-            <AlertTriangle size={18} />
-            <h2>Risk Register</h2>
-          </div>
-          <ol className="risk-list">
-            {riskItems.map((risk) => (
-              <li key={risk}>{risk}</li>
-            ))}
-          </ol>
-        </article>
-      </section>
-
-      <footer className="footer-note">
-        <CheckCircle2 size={16} />
-        <span>
-          Default target: split acacia top, four removable legs, movement-friendly top fasteners,
-          independent adjustable cassette, exposed flush touch glass, and DM-side cable access.
-        </span>
-      </footer>
+          <section className="viewer-shell" aria-label="Interactive 3D table model">
+            <TableScene optionId={selected.id} explode={explode} showDimensions={showDimensions} showCables={showCables} showHardware={showHardware} optionalFeatures={enabledFeatures} />
+            <div className="viewer-hud"><div><p className="eyebrow">Current model</p><strong>{selected.shortName}</strong></div><div className="hud-metrics"><span>Top: {dimensions.tableWidth} x {dimensions.tableLength} in</span><span>Opening: {dimensions.monitorOpeningLength} x {dimensions.monitorOpeningWidth} in</span></div></div>
+          </section>
+        </main>
+      )}
     </div>
   );
 }
